@@ -1,0 +1,4 @@
+django>=5.0
+pymongo
+python-dotenv
+python-dateutil

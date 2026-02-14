@@ -1,25 +1,14 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="uk">
 <head>
     <meta charset="UTF-8">
     <title>IT Service Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'dashboard/css/style.css' %}">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        body { background-color: #f1f3f5; font-size: 0.9rem; margin: 0; }
-        .main-container { padding: 15px 25px; display: flex; flex-direction: column; gap: 15px; }
-        .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .card { border: none; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .card-header { background-color: #fff; font-weight: bold; padding: 10px; font-size: 1rem; text-align: center; border-bottom: 1px solid #eee; }
-        .card-body { padding: 10px; height: 250px; position: relative; }
-        .table-container { max-height: 350px; overflow-y: auto; }
-        .table thead { position: sticky; top: 0; background: #f8f9fa; z-index: 10; }
-        .refresh-badge { font-size: 0.8rem; padding: 4px 10px; border-radius: 15px; }
-        .filter-group { border-right: 1px solid #dee2e6; padding-right: 15px; }
-    </style>
 </head>
 <body>
-
     <nav class="navbar navbar-dark bg-dark">
         <div class="container-fluid px-4">
             <span class="navbar-brand h1 mb-0">🖥️ IT Support Monitor</span>
@@ -114,69 +103,20 @@
         </div>
     </div>
 
+    <script src="{% static 'dashboard/js/scripts.js' %}"></script>
     <script>
-        let charts = {};
-        const chartOptions = { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } } } };
-
-        function filterTable() {
-            let filter = document.getElementById("tableSearch").value.toLowerCase();
-            let rows = document.getElementById("ticketsTable").getElementsByTagName("tr");
-            for (let row of rows) {
-                row.style.display = row.textContent.toLowerCase().includes(filter) ? "" : "none";
-            }
-        }
-
-        function initCharts() {
-            charts.status = new Chart(document.getElementById('statusChart'), { type: 'doughnut', data: { labels: {{ status_labels|safe }}, datasets: [{ data: {{ status_data|safe }}, backgroundColor: ['#28a745', '#ffc107', '#17a2b8', '#6c757d'] }] }, options: { ...chartOptions, cutout: '65%' } });
-            charts.priority = new Chart(document.getElementById('priorityChart'), { type: 'bar', data: { labels: {{ priority_labels|safe }}, datasets: [{ label: 'Заявки', data: {{ priority_data|safe }}, backgroundColor: ['#dc3545', '#fd7e14', '#007bff'] }] }, options: { ...chartOptions, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } } });
-            charts.worker = new Chart(document.getElementById('workerChart'), { type: 'bar', data: { labels: {{ worker_labels|safe }}, datasets: [{ label: 'Закрито', data: {{ worker_data|safe }}, backgroundColor: '#6f42c1' }] }, options: { ...chartOptions, indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, ticks: { stepSize: 1 } } } } });
-            charts.month = new Chart(document.getElementById('monthChart'), { type: 'line', data: { labels: {{ month_labels|safe }}, datasets: [{ label: 'Кількість', data: {{ month_data|safe }}, borderColor: '#007bff', fill: true, tension: 0.4 }] }, options: { ...chartOptions, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } } });
-        }
-
-        async function updateData() {
-            const startDate = document.getElementById('start_date').value;
-            const endDate = document.getElementById('end_date').value;
-            const response = await fetch(`/api/data/?start_date=${startDate}&end_date=${endDate}`);
-            const data = await response.json();
-            
-            document.getElementById('totalCount').innerText = data.total;
-            const tbody = document.getElementById('ticketsTable');
-            tbody.innerHTML = data.tickets_list.map(t => `
-                <tr>
-                    <td class="text-muted small">${t.date}</td>
-                    <td class="fw-bold text-primary">#${t.id}</td>
-                    <td>${t.name}</td>
-                    <td class="text-truncate" style="max-width: 400px;">${t.desc}</td>
-                    <td><span class="badge bg-light text-dark border">${t.priority}</span></td>
-                    <td><span class="badge bg-secondary" style="font-size: 0.75rem;">${t.status}</span></td>
-                </tr>
-            `).join('');
-            
-            filterTable();
-            Object.keys(charts).forEach(key => {
-                charts[key].data.labels = data[key + '_labels'];
-                charts[key].data.datasets[0].data = data[key + '_data'];
-                charts[key].update();
-            });
-        }
-
-        function setupRefresh() {
-            const interval = document.getElementById('refreshInterval').value;
-            localStorage.setItem('refreshInterval', interval);
-            const badge = document.getElementById('autoRefreshStatus');
-            if (window.refreshTimer) clearInterval(window.refreshTimer);
-            if (interval > 0) {
-                badge.innerText = `Авто: ${interval >= 60 ? (interval/60)+'хв' : interval+'с'}`;
-                badge.className = "badge bg-success refresh-badge";
-                window.refreshTimer = setInterval(updateData, interval * 1000);
-            } else { 
-                badge.innerText = "OFF"; 
-                badge.className = "badge bg-secondary refresh-badge"; 
-            }
-        }
-
         window.onload = function() {
-            initCharts();
+            const initialData = {
+                status_labels: {{ status_labels|safe }},
+                status_data: {{ status_data|safe }},
+                priority_labels: {{ priority_labels|safe }},
+                priority_data: {{ priority_data|safe }},
+                worker_labels: {{ worker_labels|safe }},
+                worker_data: {{ worker_data|safe }},
+                month_labels: {{ month_labels|safe }},
+                month_data: {{ month_data|safe }}
+            };
+            initCharts(initialData);
             const saved = localStorage.getItem('refreshInterval');
             if (saved) document.getElementById('refreshInterval').value = saved;
             setupRefresh();
