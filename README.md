@@ -24,6 +24,3 @@
 * `dashboard/` — логіка застосунку (views, templates).
 * `static/` — розділені файли стилів (CSS) та скриптів (JS).
 * `requirements.txt` — список усіх залежностей.
-=======
-# TechSupport_dashboard
->>>>>>> 0941cbe9213505346c8c25b645bcce5297635c08
