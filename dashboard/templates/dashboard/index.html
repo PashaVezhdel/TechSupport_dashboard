@@ -32,16 +32,16 @@
 
     <div class="main-container">
         <div class="card p-3 shadow-sm">
-            <form id="filterForm" class="row g-3 align-items-end">
+            <form id="filterForm" onsubmit="updateData(); return false;" class="row g-3 align-items-end">
                 <div class="col-md-7">
                     <div class="row g-2 align-items-end filter-group">
                         <div class="col-md-4">
                             <label class="form-label fw-bold mb-1 small">📅 Від:</label>
-                            <input type="date" name="start_date" class="form-control form-control-sm" value="{{ selected_start }}">
+                            <input type="date" id="start_date" name="start_date" class="form-control form-control-sm" value="{{ selected_start }}">
                         </div>
                         <div class="col-md-4">
                             <label class="form-label fw-bold mb-1 small">📅 До:</label>
-                            <input type="date" name="end_date" class="form-control form-control-sm" value="{{ selected_end }}">
+                            <input type="date" id="end_date" name="end_date" class="form-control form-control-sm" value="{{ selected_end }}">
                         </div>
                         <div class="col-md-4 d-flex gap-1">
                             <button type="submit" class="btn btn-primary btn-sm w-100 fw-bold">Пошук</button>
@@ -53,10 +53,13 @@
                     <div class="row g-2 align-items-end">
                         <div class="col-md-4">
                             <label class="form-label fw-bold mb-1 small">⏱️ Оновлення:</label>
-                            <select id="refreshInterval" class="form-select form-select-sm">
-                                <option value="0">Off</option>
+                            <select id="refreshInterval" class="form-select form-select-sm" onchange="setupRefresh()">
+                                <option value="0">Вимкнути</option>
                                 <option value="5" selected>5с</option>
+                                <option value="10">10с</option>
                                 <option value="30">30с</option>
+                                <option value="60">1хв</option>
+                                <option value="300">5хв</option>
                             </select>
                         </div>
                         <div class="col-md-8">
@@ -131,9 +134,11 @@
         }
 
         async function updateData() {
-            const params = new URLSearchParams(new FormData(document.getElementById('filterForm')));
-            const response = await fetch(`/api/data/?${params.toString()}`);
+            const startDate = document.getElementById('start_date').value;
+            const endDate = document.getElementById('end_date').value;
+            const response = await fetch(`/api/data/?start_date=${startDate}&end_date=${endDate}`);
             const data = await response.json();
+            
             document.getElementById('totalCount').innerText = data.total;
             const tbody = document.getElementById('ticketsTable');
             tbody.innerHTML = data.tickets_list.map(t => `
@@ -146,6 +151,7 @@
                     <td><span class="badge bg-secondary" style="font-size: 0.75rem;">${t.status}</span></td>
                 </tr>
             `).join('');
+            
             filterTable();
             Object.keys(charts).forEach(key => {
                 charts[key].data.labels = data[key + '_labels'];
@@ -160,10 +166,13 @@
             const badge = document.getElementById('autoRefreshStatus');
             if (window.refreshTimer) clearInterval(window.refreshTimer);
             if (interval > 0) {
-                badge.innerText = `Авто: ${interval}с`;
+                badge.innerText = `Авто: ${interval >= 60 ? (interval/60)+'хв' : interval+'с'}`;
                 badge.className = "badge bg-success refresh-badge";
                 window.refreshTimer = setInterval(updateData, interval * 1000);
-            } else { badge.innerText = "OFF"; badge.className = "badge bg-secondary refresh-badge"; }
+            } else { 
+                badge.innerText = "OFF"; 
+                badge.className = "badge bg-secondary refresh-badge"; 
+            }
         }
 
         window.onload = function() {
@@ -172,9 +181,6 @@
             if (saved) document.getElementById('refreshInterval').value = saved;
             setupRefresh();
         };
-
-        document.getElementById('refreshInterval').addEventListener('change', setupRefresh);
-        document.getElementById('filterForm').addEventListener('submit', (e) => { e.preventDefault(); updateData(); });
     </script>
 </body>
 </html>
