@@ -17,7 +17,7 @@ def get_db_data(request):
     start_date_str = request.GET.get('start_date')
     end_date_str = request.GET.get('end_date')
 
-    all_tickets = list(collection.find())
+    all_tickets = list(collection.find().sort('created_at', -1))
     filtered_tickets = []
 
     if start_date_str and end_date_str:
@@ -44,14 +44,20 @@ def get_db_data(request):
     workers = [t.get('accepted_by') for t in filtered_tickets if t.get('accepted_by')]
     worker_counts = Counter(workers).most_common(10)
 
-    dates = []
-    for t in filtered_tickets:
-        raw_date = t.get('created_at')
-        if raw_date:
-            dates.append(str(raw_date)[:7])
-    
+    dates = [str(t.get('created_at'))[:7] for t in filtered_tickets if t.get('created_at')]
     date_counts = Counter(dates)
     sorted_months = sorted(date_counts.keys())
+
+    tickets_list = []
+    for t in filtered_tickets[:15]:
+        tickets_list.append({
+            'date': str(t.get('created_at', ''))[11:16],
+            'id': t.get('ticket_id', '-'),
+            'name': t.get('name', 'Гість'),
+            'desc': t.get('description', ''),
+            'priority': t.get('priority', 'Середній'),
+            'status': t.get('status', 'Нова')
+        })
 
     return {
         'total': len(filtered_tickets),
@@ -63,6 +69,7 @@ def get_db_data(request):
         'worker_data': [item[1] for item in worker_counts],
         'month_labels': sorted_months,
         'month_data': [date_counts[m] for m in sorted_months],
+        'tickets_list': tickets_list,
         'selected_start': start_date_str,
         'selected_end': end_date_str,
     }
