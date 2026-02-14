@@ -14,42 +14,53 @@ def get_db_data(request):
     db = client['support_db']
     collection = db['tickets']
 
+    search_query = request.GET.get('search', '')
     start_date_str = request.GET.get('start_date')
     end_date_str = request.GET.get('end_date')
 
-    all_tickets = list(collection.find().sort('created_at', -1))
-    filtered_tickets = []
+    query = {}
+    if search_query:
+        query['$or'] = [
+            {'description': {'$regex': search_query, '$options': 'i'}},
+            {'name': {'$regex': search_query, '$options': 'i'}},
+            {'ticket_id': {'$regex': search_query, '$options': 'i'}},
+            {'priority': {'$regex': search_query, '$options': 'i'}},
+            {'status': {'$regex': search_query, '$options': 'i'}}
+        ]
 
+    all_found = list(collection.find(query).sort('created_at', -1))
+    
+    filtered_data = []
     if start_date_str and end_date_str:
-        start_dt = parser.parse(start_date_str).date()
-        end_dt = parser.parse(end_date_str).date()
-        for t in all_tickets:
-            raw_date = t.get('created_at')
-            if raw_date:
-                try:
+        try:
+            start_dt = parser.parse(start_date_str).date()
+            end_dt = parser.parse(end_date_str).date()
+            for t in all_found:
+                raw_date = t.get('created_at')
+                if raw_date:
                     ticket_dt = parser.parse(str(raw_date)).date()
                     if start_dt <= ticket_dt <= end_dt:
-                        filtered_tickets.append(t)
-                except:
-                    continue
+                        filtered_data.append(t)
+        except:
+            filtered_data = all_found
     else:
-        filtered_tickets = all_tickets
+        filtered_data = all_found
 
-    statuses = [t.get('status', 'Невідомо') for t in filtered_tickets]
+    statuses = [t.get('status', 'Невідомо') for t in filtered_data]
     status_counts = Counter(statuses)
 
-    priorities = [t.get('priority', 'Не вказано') for t in filtered_tickets]
+    priorities = [t.get('priority', 'Не вказано') for t in filtered_data]
     priority_counts = Counter(priorities)
 
-    workers = [t.get('accepted_by') for t in filtered_tickets if t.get('accepted_by')]
+    workers = [t.get('accepted_by') for t in filtered_data if t.get('accepted_by')]
     worker_counts = Counter(workers).most_common(10)
 
-    dates = [str(t.get('created_at'))[:7] for t in filtered_tickets if t.get('created_at')]
+    dates = [str(t.get('created_at'))[:7] for t in filtered_data if t.get('created_at')]
     date_counts = Counter(dates)
     sorted_months = sorted(date_counts.keys())
 
     tickets_list = []
-    for t in filtered_tickets[:15]:
+    for t in filtered_data[:15]:
         tickets_list.append({
             'date': str(t.get('created_at', ''))[11:16],
             'id': t.get('ticket_id', '-'),
@@ -60,7 +71,7 @@ def get_db_data(request):
         })
 
     return {
-        'total': len(filtered_tickets),
+        'total': len(filtered_data),
         'status_labels': list(status_counts.keys()),
         'status_data': list(status_counts.values()),
         'priority_labels': list(priority_counts.keys()),
@@ -70,6 +81,7 @@ def get_db_data(request):
         'month_labels': sorted_months,
         'month_data': [date_counts[m] for m in sorted_months],
         'tickets_list': tickets_list,
+        'search_query': search_query,
         'selected_start': start_date_str,
         'selected_end': end_date_str,
     }

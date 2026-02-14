@@ -7,25 +7,13 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body { background-color: #f1f3f5; font-size: 0.9rem; margin: 0; }
-        .navbar { padding: 0.5rem 1rem; }
-        .main-container { padding: 10px 20px; display: flex; flex-direction: column; gap: 10px; }
-        
-        .charts-grid { 
-            display: grid; 
-            grid-template-columns: 1fr 1fr; 
-            gap: 12px; 
-        }
-
+        .main-container { padding: 15px 25px; display: flex; flex-direction: column; gap: 15px; }
+        .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         .card { border: none; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .card-header { background-color: #fff; font-weight: bold; padding: 8px; font-size: 1rem; text-align: center; border-bottom: 1px solid #eee; }
-        
-        .card-body { padding: 10px; height: 240px; position: relative; }
-        
-        .table-card { margin-top: 5px; }
-        .table-container { max-height: 300px; overflow-y: auto; }
+        .card-header { background-color: #fff; font-weight: bold; padding: 10px; font-size: 1rem; text-align: center; border-bottom: 1px solid #eee; }
+        .card-body { padding: 10px; height: 250px; position: relative; }
+        .table-container { max-height: 350px; overflow-y: auto; }
         .table thead { position: sticky; top: 0; background: #f8f9fa; z-index: 10; }
-        
-        .status-badge { font-size: 0.75rem; padding: 4px 8px; border-radius: 10px; }
         .refresh-badge { font-size: 0.8rem; padding: 4px 10px; border-radius: 15px; }
         .filter-group { border-right: 1px solid #dee2e6; padding-right: 15px; }
     </style>
@@ -33,7 +21,7 @@
 <body>
 
     <nav class="navbar navbar-dark bg-dark">
-        <div class="container-fluid">
+        <div class="container-fluid px-4">
             <span class="navbar-brand h1 mb-0">🖥️ IT Support Monitor</span>
             <div class="d-flex align-items-center gap-3">
                 <span id="autoRefreshStatus" class="badge bg-success refresh-badge"></span>
@@ -43,9 +31,9 @@
     </nav>
 
     <div class="main-container">
-        <div class="card p-2 shadow-sm">
-            <form id="filterForm" class="row g-2 align-items-end">
-                <div class="col-md-6">
+        <div class="card p-3 shadow-sm">
+            <form id="filterForm" class="row g-3 align-items-end">
+                <div class="col-md-7">
                     <div class="row g-2 align-items-end filter-group">
                         <div class="col-md-4">
                             <label class="form-label fw-bold mb-1 small">📅 Від:</label>
@@ -61,7 +49,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-md-6 ps-2">
+                <div class="col-md-5 ps-3">
                     <div class="row g-2 align-items-end">
                         <div class="col-md-4">
                             <label class="form-label fw-bold mb-1 small">⏱️ Оновлення:</label>
@@ -80,14 +68,20 @@
         </div>
 
         <div class="charts-grid">
-            <div class="card"><div class="card-header">📊 Статуси</div><div class="card-body"><canvas id="statusChart"></canvas></div></div>
-            <div class="card"><div class="card-header">🔥 Пріоритетність</div><div class="card-body"><canvas id="priorityChart"></canvas></div></div>
-            <div class="card"><div class="card-header">🏆 Топ працівників</div><div class="card-body"><canvas id="workerChart"></canvas></div></div>
-            <div class="card"><div class="card-header">📈 Динаміка заявок</div><div class="card-body"><canvas id="monthChart"></canvas></div></div>
+            <div class="card"><div class="card-header text-center">📊 Статуси</div><div class="card-body"><canvas id="statusChart"></canvas></div></div>
+            <div class="card"><div class="card-header text-center">🔥 Пріоритетність</div><div class="card-body"><canvas id="priorityChart"></canvas></div></div>
+            <div class="card"><div class="card-header text-center">🏆 Топ працівників</div><div class="card-body"><canvas id="workerChart"></canvas></div></div>
+            <div class="card"><div class="card-header text-center">📈 Динаміка заявок</div><div class="card-body"><canvas id="monthChart"></canvas></div></div>
         </div>
 
-        <div class="card table-card shadow-sm mb-3">
-            <div class="card-header text-start">📝 Останні заявки</div>
+        <div class="card shadow-sm mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span class="text-start">📝 Список заявок</span>
+                <div class="input-group input-group-sm" style="width: 280px;">
+                    <span class="input-group-text bg-white border-end-0">🔎</span>
+                    <input type="text" id="tableSearch" class="form-control border-start-0" placeholder="Пошук в поточному списку..." onkeyup="filterTable()">
+                </div>
+            </div>
             <div class="table-container">
                 <table class="table table-hover align-middle mb-0">
                     <thead class="table-light">
@@ -106,9 +100,9 @@
                             <td class="text-muted small">{{ t.date }}</td>
                             <td class="fw-bold text-primary">#{{ t.id }}</td>
                             <td>{{ t.name }}</td>
-                            <td class="text-truncate" style="max-width: 300px;">{{ t.desc }}</td>
+                            <td class="text-truncate" style="max-width: 400px;">{{ t.desc }}</td>
                             <td><span class="badge bg-light text-dark border">{{ t.priority }}</span></td>
-                            <td><span class="badge bg-secondary status-badge">{{ t.status }}</span></td>
+                            <td><span class="badge bg-secondary" style="font-size: 0.75rem;">{{ t.status }}</span></td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -119,33 +113,21 @@
 
     <script>
         let charts = {};
-        const chartOptions = { 
-            responsive: true, 
-            maintainAspectRatio: false,
-            plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } } } 
-        };
+        const chartOptions = { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } } } };
+
+        function filterTable() {
+            let filter = document.getElementById("tableSearch").value.toLowerCase();
+            let rows = document.getElementById("ticketsTable").getElementsByTagName("tr");
+            for (let row of rows) {
+                row.style.display = row.textContent.toLowerCase().includes(filter) ? "" : "none";
+            }
+        }
 
         function initCharts() {
-            charts.status = new Chart(document.getElementById('statusChart'), {
-                type: 'doughnut',
-                data: { labels: {{ status_labels|safe }}, datasets: [{ data: {{ status_data|safe }}, backgroundColor: ['#28a745', '#ffc107', '#17a2b8', '#6c757d'] }] },
-                options: { ...chartOptions, cutout: '65%' }
-            });
-            charts.priority = new Chart(document.getElementById('priorityChart'), {
-                type: 'bar',
-                data: { labels: {{ priority_labels|safe }}, datasets: [{ label: 'Заявки', data: {{ priority_data|safe }}, backgroundColor: ['#dc3545', '#fd7e14', '#007bff'] }] },
-                options: { ...chartOptions, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
-            });
-            charts.worker = new Chart(document.getElementById('workerChart'), {
-                type: 'bar',
-                data: { labels: {{ worker_labels|safe }}, datasets: [{ label: 'Закрито', data: {{ worker_data|safe }}, backgroundColor: '#6f42c1' }] },
-                options: { ...chartOptions, indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, ticks: { stepSize: 1 } } } }
-            });
-            charts.month = new Chart(document.getElementById('monthChart'), {
-                type: 'line',
-                data: { labels: {{ month_labels|safe }}, datasets: [{ label: 'Кількість', data: {{ month_data|safe }}, borderColor: '#007bff', fill: true, tension: 0.4 }] },
-                options: { ...chartOptions, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
-            });
+            charts.status = new Chart(document.getElementById('statusChart'), { type: 'doughnut', data: { labels: {{ status_labels|safe }}, datasets: [{ data: {{ status_data|safe }}, backgroundColor: ['#28a745', '#ffc107', '#17a2b8', '#6c757d'] }] }, options: { ...chartOptions, cutout: '65%' } });
+            charts.priority = new Chart(document.getElementById('priorityChart'), { type: 'bar', data: { labels: {{ priority_labels|safe }}, datasets: [{ label: 'Заявки', data: {{ priority_data|safe }}, backgroundColor: ['#dc3545', '#fd7e14', '#007bff'] }] }, options: { ...chartOptions, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } } });
+            charts.worker = new Chart(document.getElementById('workerChart'), { type: 'bar', data: { labels: {{ worker_labels|safe }}, datasets: [{ label: 'Закрито', data: {{ worker_data|safe }}, backgroundColor: '#6f42c1' }] }, options: { ...chartOptions, indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, ticks: { stepSize: 1 } } } } });
+            charts.month = new Chart(document.getElementById('monthChart'), { type: 'line', data: { labels: {{ month_labels|safe }}, datasets: [{ label: 'Кількість', data: {{ month_data|safe }}, borderColor: '#007bff', fill: true, tension: 0.4 }] }, options: { ...chartOptions, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } } });
         }
 
         async function updateData() {
@@ -159,11 +141,12 @@
                     <td class="text-muted small">${t.date}</td>
                     <td class="fw-bold text-primary">#${t.id}</td>
                     <td>${t.name}</td>
-                    <td class="text-truncate" style="max-width: 300px;">${t.desc}</td>
+                    <td class="text-truncate" style="max-width: 400px;">${t.desc}</td>
                     <td><span class="badge bg-light text-dark border">${t.priority}</span></td>
-                    <td><span class="badge bg-secondary status-badge">${t.status}</span></td>
+                    <td><span class="badge bg-secondary" style="font-size: 0.75rem;">${t.status}</span></td>
                 </tr>
             `).join('');
+            filterTable();
             Object.keys(charts).forEach(key => {
                 charts[key].data.labels = data[key + '_labels'];
                 charts[key].data.datasets[0].data = data[key + '_data'];
